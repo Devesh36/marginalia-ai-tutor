@@ -34,8 +34,13 @@ function Element({ element: e, focused }: { element: BoardElement; focused: bool
   const color = colors[e.color];
   const line = e.type === 'line' || e.type === 'arrow';
   const lines = wrapped(e.label, line ? 180 : e.w - 20);
-  const cx = line ? e.x + e.w / 2 : e.x + e.w / 2;
-  const cy = line ? e.y + e.h / 2 - 18 : e.y + e.h / 2;
+  const vertical = line && Math.abs(e.h) > Math.abs(e.w);
+  const midpoint = e.x + e.w / 2;
+  // Put vertical-arrow labels beside the stroke instead of through its center.
+  const cx = vertical
+    ? Math.max(100, Math.min(820, midpoint + (midpoint > 780 ? -75 : 75)))
+    : midpoint;
+  const cy = e.y + e.h / 2 - (line && !vertical ? 22 : 0);
   return (
     <g className={`board-element ${focused ? 'focused' : ''}`} style={{ color }}>
       {focused && !line && (

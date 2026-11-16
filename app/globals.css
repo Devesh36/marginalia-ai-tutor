@@ -1440,3 +1440,17 @@ button svg {
     scroll-behavior: auto !important;
   }
 }
+
+/* Keep supporting copy readable on the warm paper background. */
+.workspace-heading p,
+.welcome > p,
+.compose-hint,
+.chapter-tabs button,
+.caption-step,
+.timeline-row,
+.playback-status,
+.seek-note,
+.workspace-footer,
+.board-hint {
+  color: #737e6a;
+}

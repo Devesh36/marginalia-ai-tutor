@@ -4,6 +4,14 @@ A chat-first tutor that turns a question into an approximately two-minute visual
 
 Built for the [Braynix Studios assignment](https://github.com/Braynix-Studios/ai-whiteboard-tutor-assignment).
 
+## Links
+
+- Source: https://github.com/Devesh36/marginalia-ai-tutor
+- Public preview: https://marginalia-ai-tutor.vercel.app
+- Local Codex app: http://127.0.0.1:3000
+
+The public preview currently supports the authored sample; Gemini must be configured for live generation. The local Codex lesson and follow-up flow has been verified.
+
 ## Features
 
 - Real AI lesson generation using **Gemini** or a **local, signed-in Codex CLI**.
