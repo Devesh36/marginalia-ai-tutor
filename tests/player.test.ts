@@ -170,3 +170,33 @@ test('an end event queued just before pause does not restart narration', () => {
   assert.equal(player.state.index, 1);
   assert.equal(voice.calls.length, 2);
 });
+
+test('small unlabeled graph markers validate, but zero-sized or labeled tiny shapes do not', () => {
+  const lesson = structuredClone(sample.lesson);
+  const marker = {
+    id: 'intersection',
+    type: 'ellipse' as const,
+    x: 430,
+    y: 250,
+    w: 20,
+    h: 20,
+    label: '',
+    color: 'purple' as const,
+  };
+  lesson.scenes[0].elements.push(marker);
+  lesson.scenes[0].beats[0].reveal.push(marker.id);
+  assert.ok(lessonSchema.safeParse(lesson).success);
+  marker.w = 0;
+  const invalid = lessonSchema.safeParse(lesson);
+  assert.equal(invalid.success, false);
+  if (!invalid.success)
+    assert.deepEqual(invalid.error.issues[0].path, [
+      'scenes',
+      0,
+      'elements',
+      lesson.scenes[0].elements.length - 1,
+    ]);
+  marker.w = 20;
+  marker.label = 'Too small';
+  assert.equal(lessonSchema.safeParse(lesson).success, false);
+});

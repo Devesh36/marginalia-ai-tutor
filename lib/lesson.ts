@@ -57,18 +57,21 @@ export const lessonSchema = z
             path: ['scenes', si, 'beats', bi],
           });
       }
-      for (const e of scene.elements) {
+      for (const [ei, e] of scene.elements.entries()) {
+        // Small unlabeled markers are useful for graph intersections and geometry.
+        const minWidth = e.type === 'text' || e.label.trim() ? 30 : 4;
+        const minHeight = e.type === 'text' || e.label.trim() ? 20 : 4;
         if (
           e.x + e.w < 10 ||
           e.x + e.w > 900 ||
           e.y + e.h < 10 ||
           e.y + e.h > 500 ||
-          (['box', 'ellipse', 'text'].includes(e.type) && (e.w < 30 || e.h < 20))
+          (['box', 'ellipse', 'text'].includes(e.type) && (e.w < minWidth || e.h < minHeight))
         ) {
           ctx.addIssue({
             code: 'custom',
-            message: 'Element outside board or invalid size',
-            path: ['scenes', si, 'elements'],
+            message: `Element ${e.id}: endpoints must be within x=10..900, y=10..500; shapes need width >= ${minWidth}, height >= ${minHeight}`,
+            path: ['scenes', si, 'elements', ei],
           });
         }
       }
@@ -135,26 +138,44 @@ const object = (properties: Record<string, unknown>) => ({
 });
 
 // Shared by Gemini structured output and Codex --output-schema.
+// Keep nested constraints compact: Gemini can reject bounds on every nested
+// array/number as too complex. Descriptions guide lengths; Zod enforces them.
 export const lessonJsonSchema = object({
-  title: string,
-  summary: string,
+  title: { ...string, description: 'A short lesson title, at most 90 characters.' },
+  summary: {
+    ...string,
+    description: 'ONE short sentence of 12–20 words. Maximum 240 characters, including spaces.',
+  },
   scenes: {
     type: 'array',
     items: object({
-      title: string,
+      title: { ...string, description: 'Chapter title, at most 70 characters.' },
       elements: {
         type: 'array',
         items: object({
-          id: string,
+          id: {
+            ...string,
+            description: 'Unique short ID within this scene, at most 40 characters.',
+          },
           type: {
             type: 'string',
             enum: ['box', 'ellipse', 'text', 'arrow', 'line'],
           },
-          x: { type: 'number' },
-          y: { type: 'number' },
-          w: { type: 'number' },
-          h: { type: 'number' },
-          label: string,
+          x: { type: 'number', description: 'Start x: 20 to 880.' },
+          y: { type: 'number', description: 'Start y: 20 to 470.' },
+          w: {
+            type: 'number',
+            description: 'Width or line delta; endpoint x+w must be within 20 to 900.',
+          },
+          h: {
+            type: 'number',
+            description: 'Height or line delta; endpoint y+h must be within 20 to 500.',
+          },
+          label: {
+            ...string,
+            description:
+              'Short diagram label, ideally 1–5 words, maximum 90 characters. Empty for unlabeled shapes.',
+          },
           color: {
             type: 'string',
             enum: ['ink', 'green', 'orange', 'blue', 'purple'],
@@ -163,15 +184,27 @@ export const lessonJsonSchema = object({
       },
       beats: {
         type: 'array',
-        items: object({ narration: string, reveal: strings, focus: strings }),
+        items: object({
+          narration: {
+            ...string,
+            description: 'One or two spoken sentences, 12–30 words, maximum 650 characters.',
+          },
+          reveal: strings,
+          focus: strings,
+        }),
       },
     }),
   },
   quiz: object({
-    question: string,
-    choices: strings,
-    answer: { type: 'integer' },
-    explanation: string,
+    question: { ...string, description: 'One concise quiz question, at most 240 characters.' },
+    choices: {
+      ...strings,
+      minItems: 3,
+      maxItems: 3,
+      items: { ...string, description: 'A short answer choice, at most 160 characters.' },
+    },
+    answer: { type: 'integer', enum: [0, 1, 2] },
+    explanation: { ...string, description: 'Brief explanation, at most 400 characters.' },
   }),
 });
 export const followupSchema = z.object({
@@ -179,6 +212,10 @@ export const followupSchema = z.object({
   suggestions: z.array(z.string().min(1).max(160)).max(3),
 });
 export const followupJsonSchema = object({
-  answer: string,
-  suggestions: strings,
+  answer: { ...string, description: 'Direct answer, at most 180 words and 2400 characters.' },
+  suggestions: {
+    ...strings,
+    maxItems: 3,
+    items: { ...string, description: 'Short follow-up suggestion, at most 160 characters.' },
+  },
 });

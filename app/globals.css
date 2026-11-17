@@ -589,6 +589,7 @@ button svg {
 }
 .board-surface {
   position: relative;
+  padding-bottom: 58px;
   background-image: radial-gradient(#b7bfaa50 0.7px, transparent 0.7px);
   background-size: 18px 18px;
   margin-top: 8px;
@@ -600,7 +601,7 @@ button svg {
   max-height: 450px;
   min-height: 220px;
   font-family: var(--sans);
-  padding: 0 10px 20px;
+  padding: 0 10px;
 }
 .drawing-board.pen-active {
   touch-action: none;
@@ -1315,7 +1316,7 @@ button svg {
     margin: 15px 16px 0;
   }
   .drawing-board {
-    padding: 0 4px 42px;
+    padding: 0 4px;
     min-height: 255px;
   }
   .board-tools {

@@ -40,21 +40,29 @@ The development server binds to loopback. Do not expose or tunnel the local Code
 
 ## Run with Gemini
 
-In `.env.local`, set:
+For hidden key entry in your Terminal, run:
+
+```sh
+python3 scripts/setup-gemini.py
+```
+
+This writes the key to ignored `.env.local` with owner-only permissions and selects Gemini. The key is not printed or passed as a command argument. You can also edit `.env.local` directly:
 
 ```dotenv
 AI_PROVIDER=gemini
 GEMINI_API_KEY=your_server_side_key
-GEMINI_MODEL=gemini-3.8-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
 Restart the development server. Gemini is also available in the provider selector when its key is configured. Never use a `NEXT_PUBLIC_` prefix for the key. Never commit `.env.local`.
+
+The default is `gemini-3.5-flash-lite`. The model remains configurable. When using the older Gemini 2.5 Flash family, the server disables automatic thinking to reserve the response budget for lesson JSON. The provider schema stays compact to avoid Gemini's schema-complexity limit; server-side Zod validation still checks sizes, diagram references, geometry, narration length, and quiz choices.
 
 | Variable         | Purpose                                                                  |
 | ---------------- | ------------------------------------------------------------------------ |
 | `AI_PROVIDER`    | Default provider: `codex` locally or `gemini` for hosting                |
 | `GEMINI_API_KEY` | Server-only Google AI API credential                                     |
-| `GEMINI_MODEL`   | Model with structured JSON output; defaults to `gemini-3.8-flash`        |
+| `GEMINI_MODEL`   | Model with structured JSON output; defaults to `gemini-3.5-flash-lite`   |
 | `CODEX_BIN`      | Optional local Codex executable path; otherwise resolves `codex` on PATH |
 
 ## Architecture
@@ -118,13 +126,27 @@ node --env-file=.env.local --import tsx scripts/smoke-local.ts
 
 It uses the CLI account's allowance. Mocked tests do not prove provider availability. Live Gemini verification requires a configured key.
 
+With the local server running, the live API regression checks generate fractions and supply-and-demand lessons and ask two contextual follow-ups for each:
+
+```sh
+npm run test:local
+# Rerun one topic:
+npm run test:local -- supply-demand
+# Test Gemini locally after configuring the key:
+TEST_PROVIDER=gemini npm run test:local
+# Test the deployed application's server-side Gemini configuration:
+TEST_PROVIDER=gemini TEST_BASE_URL=https://marginalia-ai-tutor.vercel.app npm run test:local
+```
+
+Results and generated lessons are saved under ignored `outputs/e2e/`. These checks use real Codex requests; browser voice, drawing, and layout checks are manual. See [local verification notes](docs/local-verification.md) for the tested flows and fixes.
+
 ## Deploy to Vercel
 
 Import this repository as a **Next.js** project. Set these production environment variables in Vercel:
 
 - `AI_PROVIDER=gemini`
 - `GEMINI_API_KEY` (secret)
-- `GEMINI_MODEL=gemini-3.8-flash`
+- `GEMINI_MODEL=gemini-3.5-flash-lite`
 
 Deploy, then verify a new topic and a follow-up from the public URL. The public application must not rely on a local Codex process. Without the Gemini key the deployed app can play the labeled sample, but live generation shows a setup error; that state is **not a complete assignment submission**.
 

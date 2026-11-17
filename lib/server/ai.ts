@@ -46,14 +46,13 @@ export async function generateJson(
 }
 
 async function gemini(prompt: string, schema: Record<string, unknown>, signal: AbortSignal) {
-  const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+  const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
   if (!/^[a-z0-9.-]+$/.test(model)) throw new AppError('Invalid server model configuration.', 503);
   const timeout = AbortSignal.timeout(85_000);
   let response: Response;
   try {
-    response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-      {
+    const request = () =>
+      fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,13 +63,25 @@ async function gemini(prompt: string, schema: Record<string, unknown>, signal: A
           generationConfig: {
             temperature: 0.65,
             maxOutputTokens: 14000,
+            // Flash's automatic thinking can consume the output budget before
+            // the full lesson JSON is emitted. Keep this bounded visual task fast.
+            ...(/^gemini-2\.5-flash(?:-|$)/.test(model)
+              ? { thinkingConfig: { thinkingBudget: 0 } }
+              : {}),
             responseMimeType: 'application/json',
             responseJsonSchema: schema,
           },
         }),
         signal: AbortSignal.any([signal, timeout]),
-      },
-    );
+      });
+    response = await request();
+    // One retry for transient upstream failures, sharing the original deadline.
+    // Quota and credential failures are not retried.
+    if ([500, 502, 503, 504].includes(response.status)) {
+      await response.body?.cancel();
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      response = await request();
+    }
   } catch {
     throw new AppError(
       signal.aborted ? 'Request cancelled.' : 'Gemini took too long to respond. Please try again.',
@@ -78,8 +89,16 @@ async function gemini(prompt: string, schema: Record<string, unknown>, signal: A
     );
   }
   if (!response.ok) {
+    if (response.status === 404)
+      throw new AppError(
+        'The configured Gemini model is unavailable. Update GEMINI_MODEL on the server to an available model.',
+        503,
+      );
     if (response.status === 429)
-      throw new AppError('Gemini is at its usage limit. Please wait a moment and try again.', 429);
+      throw new AppError(
+        'Gemini has reached its usage limit. Please try again later; daily limits reset on the provider’s schedule.',
+        429,
+      );
     if (response.status === 400 || response.status === 401 || response.status === 403)
       throw new AppError(
         'Gemini could not accept the request. Check the server API key, model, and project access.',
@@ -88,6 +107,8 @@ async function gemini(prompt: string, schema: Record<string, unknown>, signal: A
     throw new AppError('Gemini is temporarily unavailable. Please try again.', 502);
   }
   const result = await response.json();
+  if (result.candidates?.[0]?.finishReason === 'MAX_TOKENS')
+    throw new AppError('The lesson exceeded the model response limit. Please try again.', 502);
   const text = (result.candidates?.[0]?.content?.parts ?? [])
     .filter((p: { thought?: boolean }) => !p.thought)
     .map((p: { text?: string }) => p.text ?? '')

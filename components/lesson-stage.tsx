@@ -47,7 +47,16 @@ export function LessonStage({
     playerRef.current = player;
     player.seek(stateRef.current.index);
     setState(player.state);
-    const unsub = player.subscribe(setState);
+    let previousPhase = player.state.phase;
+    const unsub = player.subscribe((next) => {
+      setState(next);
+      if (next.phase === 'ended' && previousPhase !== 'ended') setShowQuiz(true);
+      if (previousPhase === 'ended' && next.phase !== 'ended') {
+        setShowQuiz(false);
+        setAnswer(null);
+      }
+      previousPhase = next.phase;
+    });
     pauseRef.current = () => player.pause();
     const visibility = () => {
       if (document.hidden) player.pause();
@@ -149,6 +158,7 @@ export function LessonStage({
                 onClick={() => {
                   playerRef.current?.restart();
                   setShowQuiz(false);
+                  setAnswer(null);
                 }}
               >
                 <RotateCcw size={18} />
@@ -244,7 +254,7 @@ export function LessonStage({
           <ArrowDown size={14} />
         </button>
       </div>
-      {(showQuiz || state.phase === 'ended') && (
+      {showQuiz && (
         <section className="quiz-card">
           <span className="eyebrow">LET’S SEE WHAT CLICKED</span>
           <h3>{lesson.quiz.question}</h3>
