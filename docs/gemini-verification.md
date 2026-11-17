@@ -32,4 +32,13 @@ These are observed examples, not a guarantee that every generated explanation is
 
 Validation: 24 automated tests, TypeScript checking, and production builds passed. Live requests use the project's real Gemini allowance. Generated JSON and diagnostics are kept in ignored `outputs/e2e/`.
 
-The Google Form has not been submitted.
+## Final submission check
+
+On 17 November 2026, the public repository and live deployment were checked again at application commit `c795eac`.
+
+- A fresh binary-search lesson generated successfully with four chapters and 12 steps (estimated narration 1:39). Browser narration advanced the board and captions from step 1 to step 4. Pause/resume, forward/backward seeking, restart, chapter navigation, and quiz feedback worked.
+- A follow-up asking about an absent target correctly reused the lesson's array `[3, 7, 12, 19, 25]` and explained why searching for 20 exhausts the range.
+- Two earlier photosynthesis attempts did not succeed: one failed narration-length validation after repair, and the other timed out. These are disclosed generation limitations, not successful checks.
+- A fresh scan found no occurrence of the actual Gemini key in tracked files, public HTML, or seven public JavaScript assets. The local environment file remained ignored with permissions `600`.
+
+The Braynix Studios Google Form was submitted successfully on 17 November 2026. Its confirmation page stated: “Your assignment has been submitted successfully. Thank you for completing the Braynix Studios assignment!” Both public links, AI-tool usage, and known limitations were included. Local screenshots are saved under ignored `outputs/e2e/final-live-check.jpg` and `outputs/e2e/assignment-submission-confirmation.jpg`.

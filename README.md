@@ -171,4 +171,4 @@ npm start
 
 ## Submission status
 
-The source repository and live Gemini demo are public. The Google Form has not been submitted. Use the repository and demo links above when submitting the assignment.
+The source repository and live Gemini demo are public. The Braynix Studios Google Form was submitted successfully on 17 November 2026 with both links, implementation details, AI-tool disclosure, and known limitations.
