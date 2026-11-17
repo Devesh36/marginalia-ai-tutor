@@ -75,11 +75,11 @@ async function gemini(prompt: string, schema: Record<string, unknown>, signal: A
         signal: AbortSignal.any([signal, timeout]),
       });
     response = await request();
-    // One retry for transient upstream failures, sharing the original deadline.
+    // Two bounded retries for transient failures, sharing the original deadline.
     // Quota and credential failures are not retried.
-    if ([500, 502, 503, 504].includes(response.status)) {
+    for (let retry = 0; retry < 2 && [500, 502, 503, 504].includes(response.status); retry++) {
       await response.body?.cancel();
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 600 * (retry + 1)));
       response = await request();
     }
   } catch {

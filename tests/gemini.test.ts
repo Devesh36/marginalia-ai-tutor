@@ -69,7 +69,7 @@ test('Gemini quota, blocked output, and malformed JSON produce useful errors wit
   }
 });
 
-test('Gemini retries a transient upstream failure once, but never retries quota failures', async () => {
+test('Gemini bounds transient retries and never retries quota failures', async () => {
   const previousFetch = globalThis.fetch;
   try {
     let calls = 0;
@@ -83,6 +83,16 @@ test('Gemini retries a transient upstream failure once, but never retries quota 
       { ok: true },
     );
     assert.equal(calls, 2);
+    calls = 0;
+    globalThis.fetch = async () => {
+      calls++;
+      return new Response('temporary failure', { status: 503 });
+    };
+    await assert.rejects(
+      generateJson('gemini', 'test', { type: 'object' }, new AbortController().signal),
+      (e: unknown) => e instanceof AppError && e.status === 502,
+    );
+    assert.equal(calls, 3);
     calls = 0;
     globalThis.fetch = async () => {
       calls++;

@@ -7,10 +7,12 @@ Built for the [Braynix Studios assignment](https://github.com/Braynix-Studios/ai
 ## Links
 
 - Source: https://github.com/Devesh36/marginalia-ai-tutor
-- Public preview: https://marginalia-ai-tutor.vercel.app
+- Live demo: https://marginalia-ai-tutor.vercel.app
 - Local Codex app: http://127.0.0.1:3000
 
-The public preview currently supports the authored sample; Gemini must be configured for live generation. The local Codex lesson and follow-up flow has been verified.
+The public app uses server-side Gemini for live generation and follow-up questions. Local Codex remains available for loopback development. No API key is required from visitors.
+
+See [Gemini deployment verification](docs/gemini-verification.md) for tested flows, credential handling, and observed provider limits.
 
 ## Features
 
@@ -169,4 +171,4 @@ npm start
 
 ## Submission status
 
-The local Codex path is intended for development and demonstration. A public evaluator-ready submission additionally needs Gemini configured, a successful live generation check, and the Google Form submitted with the repository and deployment links. Do not submit a sample-only deployment as the finished assignment.
+The source repository and live Gemini demo are public. The Google Form has not been submitted. Use the repository and demo links above when submitting the assignment.
